@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block content %}<div class="page-heading"><span class="eyebrow">YOUR BAG</span><h1>Shopping cart</h1></div>
+<div class="panel">
+{% for item in items %}<div class="cart-row"><div><strong>{{ item.product.name }}</strong><small>৳{{ '%.2f'|format(item.product.price) }} each</small></div><form method="post" action="{{ url_for('main.update_cart', item_id=item.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="number" min="0" max="{{ item.product.stock }}" name="quantity" value="{{ item.quantity }}"><button class="button secondary">Update</button></form><strong>৳{{ '%.2f'|format(item.product.price * item.quantity) }}</strong></div>{% else %}<p class="empty-state">Your cart is waiting for something wonderful.</p>{% endfor %}
+<div class="cart-total"><span>Subtotal</span><strong>৳{{ '%.2f'|format(total) }}</strong></div>{% if items %}<a class="button" href="{{ url_for('main.checkout') }}">Continue to checkout</a>{% endif %}
+</div>{% endblock %}

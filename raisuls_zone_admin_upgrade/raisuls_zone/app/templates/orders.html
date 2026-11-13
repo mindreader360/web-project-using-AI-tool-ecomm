@@ -1,0 +1,2 @@
+{% extends "base.html" %}
+{% block content %}<div class="page-heading"><span class="eyebrow">YOUR PURCHASES</span><h1>Order history</h1></div><div class="panel">{% for o in orders %}<div class="order-row"><div><strong>Order #{{ o.id }}</strong><small>{{ o.created_at.strftime('%d %b %Y, %I:%M %p') }} · {{ o.payment_method }}</small></div><span class="status">{{ o.status }}</span><strong>৳{{ '%.2f'|format(o.total) }}</strong></div>{% else %}<p class="empty-state">No orders yet.</p>{% endfor %}</div>{% endblock %}

@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="detail-layout"><div class="detail-art"><span>{{ product.name[:1]|upper }}</span></div><div class="detail-copy"><span class="eyebrow">{{ product.category.name if product.category else 'COLLECTION' }}</span><h1>{{ product.name }}</h1><p class="price large">৳{{ '%.2f'|format(product.price) }}</p><p>{{ product.description }}</p><p class="muted">{{ product.stock }} available</p>
+<form method="post" action="{{ url_for('main.add_to_cart', product_id=product.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button" {% if product.stock < 1 %}disabled{% endif %}>Add to cart</button></form><p class="muted">Secure checkout · Cash on delivery</p></div></div>
+{% endblock %}

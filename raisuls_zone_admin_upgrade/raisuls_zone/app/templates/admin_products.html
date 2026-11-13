@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="page-heading admin-heading">
+  <div><span class="eyebrow">CATALOGUE CONTROL</span><h1>Product management</h1><p class="muted">Create, update, duplicate, hide and safely remove catalogue items.</p></div>
+  <a class="button secondary" href="{{ url_for('admin.export',kind='products') }}">Export Excel ↓</a>
+</div>
+
+<div class="product-admin-layout">
+  <form class="panel form-panel" method="post" action="{{ url_for('admin.products') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <h2>Add a product</h2>
+    <label>Product name<input name="name" required maxlength="160" placeholder="e.g. Wireless Headphones"></label>
+    <label>Description<textarea name="description" rows="3" maxlength="5000"></textarea></label>
+    <label>Image URL<input name="image_url" type="url" maxlength="500" placeholder="https://..."></label>
+    <div class="inline-fields">
+      <label>Price (BDT)<input type="number" name="price" min="0" step="0.01" required></label>
+      <label>Opening stock<input type="number" name="stock" min="0" step="1" required></label>
+    </div>
+    <label>Category<select name="category_id"><option value="">Uncategorised</option>{% for c in categories %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select></label>
+    <button class="button full" type="submit">＋ Create product</button>
+  </form>
+
+  <section class="panel product-list-panel">
+    <div class="section-title-row"><div><h2>Catalogue <span class="muted">({{ pagination.total }} products)</span></h2><p class="muted">Select products for bulk removal or manage each item individually.</p></div></div>
+    <form class="product-filter" method="get" action="{{ url_for('admin.products') }}">
+      <input name="q" value="{{ search }}" placeholder="Search product name…">
+      <select name="status"><option value="">All visibility</option><option value="active" {% if selected_status=='active' %}selected{% endif %}>Active</option><option value="hidden" {% if selected_status=='hidden' %}selected{% endif %}>Hidden</option></select>
+      <select name="category"><option value="">All categories</option>{% for c in categories %}<option value="{{ c.id }}" {% if selected_category==c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select>
+      <button class="button secondary" type="submit">Filter</button>
+      <a class="text-button" href="{{ url_for('admin.products') }}">Reset</a>
+    </form>
+
+    <form id="bulk-delete-form" method="post" action="{{ url_for('admin.bulk_delete_products') }}" onsubmit="return confirm('Permanently delete all selected products? Historical order details will be retained.');"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"></form>
+      <div class="bulk-toolbar"><label class="check-label"><input type="checkbox" id="select-all-products"> Select all on this page</label><button class="button danger-button" type="submit" form="bulk-delete-form">Delete selected</button></div>
+      {% for p in products %}
+      <div class="product-admin-card">
+        <div class="product-select"><input type="checkbox" form="bulk-delete-form" name="product_ids" value="{{ p.id }}" class="product-check" aria-label="Select {{ p.name }}"></div>
+        <div class="product-admin-main">
+          <div class="product-admin-title"><strong>{{ p.name }}</strong><span class="status {{ 'status-hidden' if not p.active else '' }}">{{ 'Active' if p.active else 'Hidden / Draft' }}</span></div>
+          <small>{{ p.category.name if p.category else 'Uncategorised' }} · {{ p.stock }} in stock · ৳{{ '%.2f'|format(p.price) }}</small>
+          <details class="product-edit"><summary>Edit product details <span>⌄</span></summary>
+            <form class="form-panel product-edit-form" method="post" action="{{ url_for('admin.edit_product',product_id=p.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <label>Name<input name="name" value="{{ p.name }}" required maxlength="160"></label>
+              <label>Description<textarea name="description" rows="3">{{ p.description }}</textarea></label>
+              <label>Image URL<input name="image_url" type="url" maxlength="500" value="{{ p.image_url or '' }}"></label>
+              <div class="inline-fields"><label>Price (BDT)<input type="number" name="price" min="0" step="0.01" value="{{ p.price }}" required></label><label>Stock<input type="number" name="stock" min="0" step="1" value="{{ p.stock }}" required></label></div>
+              <label>Category<select name="category_id"><option value="">Uncategorised</option>{% for c in categories %}<option value="{{ c.id }}" {% if p.category_id==c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select></label>
+              <label class="check-label"><input type="checkbox" name="active" value="1" {% if p.active %}checked{% endif %}> Visible in storefront</label>
+              <button class="button" type="submit">Save changes</button>
+            </form>
+          </details>
+        </div>
+        <div class="product-admin-actions">
+          <form method="post" action="{{ url_for('admin.duplicate_product',product_id=p.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button secondary" type="submit">Duplicate</button></form>
+          <form method="post" action="{{ url_for('admin.delete_product',product_id=p.id) }}" onsubmit="return confirm('Delete this product? Historical order details will be preserved.');"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button danger-button" type="submit">Delete</button></form>
+        </div>
+      </div>
+      {% else %}<div class="empty-state">No products match your filters. Try resetting the search or create a new product.</div>{% endfor %}
+    {% if pagination.pages > 1 %}
+    <nav class="pagination" aria-label="Product pages">
+      {% if pagination.has_prev %}<a href="{{ url_for('admin.products',page=pagination.prev_num,q=search,status=selected_status,category=selected_category or '') }}">← Previous</a>{% endif %}
+      <span>Page {{ pagination.page }} of {{ pagination.pages }}</span>
+      {% if pagination.has_next %}<a href="{{ url_for('admin.products',page=pagination.next_num,q=search,status=selected_status,category=selected_category or '') }}">Next →</a>{% endif %}
+    </nav>
+    {% endif %}
+  </section>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const all = document.getElementById('select-all-products');
+  if (all) all.addEventListener('change', () => document.querySelectorAll('.product-check').forEach(box => box.checked = all.checked));
+});
+</script>
+{% endblock %}

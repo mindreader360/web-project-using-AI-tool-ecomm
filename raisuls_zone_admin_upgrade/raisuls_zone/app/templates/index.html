@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}RAISUL'S ZONE | Discover More{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="hero-copy"><span class="eyebrow">THE EVERYDAY MARKETPLACE</span><h1>Everything you love.<br><em>One destination.</em></h1>
+  <p>Discover everyday essentials, trending tech and fresh finds at prices you'll love.</p>
+  <a class="button light" href="#products">Explore products</a></div>
+  <div class="hero-art"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="hero-tag">SMART<br>SHOPPING</div><div class="hero-disc">RZ</div></div>
+</section>
+<section class="section-head"><div><span class="eyebrow">CURATED FOR YOU</span><h2>Shop by category</h2></div></section>
+<div class="category-row">
+  {% for c in categories %}<a class="category-chip" href="{{ url_for('main.index', category=c.id) }}">{{ c.name }} <span>↗</span></a>{% endfor %}
+</div>
+<section id="products" class="section-head products-head"><div><span class="eyebrow">THE LATEST FINDS</span><h2>Popular products</h2></div>
+<form method="get" class="sort-form"><input type="hidden" name="q" value="{{ q }}"><select name="sort" onchange="this.form.submit()"><option value="">Latest</option><option value="price_asc">Price: low to high</option><option value="price_desc">Price: high to low</option></select></form></section>
+<div class="product-grid">
+{% for p in products %}
+  <article class="product-card">
+    <a class="product-image" href="{{ url_for('main.product_detail', product_id=p.id) }}"><div class="product-symbol">{{ p.name[:1]|upper }}</div><span class="stock-label">{{ 'In stock' if p.stock > 0 else 'Sold out' }}</span></a>
+    <div class="product-info"><span class="product-category">{{ p.category.name if p.category else 'Featured' }}</span><h3><a href="{{ url_for('main.product_detail', product_id=p.id) }}">{{ p.name }}</a></h3><p class="price">৳{{ '%.2f'|format(p.price) }}</p>
+    <form method="post" action="{{ url_for('main.add_to_cart', product_id=p.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button full" {% if p.stock < 1 %}disabled{% endif %}>Add to cart</button></form></div>
+  </article>
+{% else %}<div class="empty-state">No products found. Try another search.</div>{% endfor %}
+</div>
+{% endblock %}
